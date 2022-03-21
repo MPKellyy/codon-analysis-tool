@@ -54,10 +54,10 @@ def create_df(readname, readlength, codonmap):
         # Adding entry to dataframe list
         data.append(codondata.copy())
 
-    # Convert dataframe list into a dataframe
+    # Convert dataframe list into a dataframe, removing unnecessary index column from dataframe that is set on default
     df = pd.DataFrame(data, columns=['read_name', 'codon', 'times_seen', 'locol_codon_frequency', 'contains_ambiguous'])
-
     # Print and return dataframe
+    df = df.set_index('read_name')
     print(df)
     return df
 
