@@ -4,14 +4,21 @@ from Bio.SeqIO.QualityIO import FastqGeneralIterator
 
 # Function used to identify and keep track of incoming codons
 # Input: sequence, codon frequency dictionary, starting index
-def track_codons(inputseq, codonmap, offset):
+def track_codons(inputseq, codonmap, codon_limit, offset, five_to_three_prime):
+    if not five_to_three_prime:
+        inputseq = inputseq[::-1]
+
     length = len(inputseq)  # Saving length of current sequence
     start = offset  # Starting index for codon frame read
     end = start + 2  # Ending index for codon frame read
     codonsread = 0  # Keeps track of codons read
 
     # While the frame has three nucleotides to read
-    while end < length:
+    for codon_read in range(0, codon_limit):
+        # Ensures reading frame doesn't run-off DNA fragment (ie accessing 3rd codon when only 6 nucleotides were given)
+        if (start >= length) or (start+1 >= length) or (end >= length):
+            break
+
         # Saving the current codon in the reading frame
         codon = inputseq[start] + inputseq[start+1] + inputseq[end]
 
@@ -35,17 +42,18 @@ def track_codons(inputseq, codonmap, offset):
 
 # Function used to convert codon frequency dictionary to a dataframe
 # Input: Name of read, length of read, codon frequency dictionary
-def create_df(readname, readlength, codonmap):
+def create_df(readname, total_codons, codonmap):
     # Creating an empty list to hold all entries in the dataframe
     data = []
+    codon_index = 0
 
     # Iterating through all codons saved in codon map (aka frequency dictionary)
     for codon in codonmap:
         localfrequency = 0  # Variable for storing frequency of current codon's appearance in the read it came from
 
         # Case for handling a 0 length read: if sequence length is not zero, calculate frequency
-        if readlength != 0:
-            localfrequency = round(float(codonmap[codon])/readlength, 5)
+        if total_codons != 0:
+            localfrequency = round(float(codonmap[codon])/total_codons, 5)
 
         # Creating a list to store current entry in dataframe
         # Cols: Name of read codon came from, codon sequence, times seen, frequency in read, contains an ambiguous read
@@ -55,7 +63,7 @@ def create_df(readname, readlength, codonmap):
         data.append(codondata.copy())
 
     # Convert dataframe list into a dataframe, removing unnecessary index column from dataframe that is set on default
-    df = pd.DataFrame(data, columns=['read_name', 'codon', 'times_seen', 'locol_codon_frequency', 'contains_ambiguous'])
+    df = pd.DataFrame(data, columns=['read_name', 'codon', 'times_seen', 'local_codon_frequency', 'contains_ambiguous'])
     # Print and return dataframe
     df = df.set_index('read_name')
     print(df)
@@ -76,7 +84,7 @@ def main():
         # For every sequence in fastq file
         for title, seq, qual in FastqGeneralIterator(in_handle):
             # Analyze all codons in current sequence, update number of codons seen
-            codoncounter += track_codons(seq, codonmap, 0)
+            codoncounter += track_codons(seq, codonmap, 3, 9, False)
 
         # Creating a name for this read by removing the .fastq portion of the input file
         readname = filename[0:len(filename) - 6:]
@@ -94,7 +102,6 @@ if __name__ == "__main__":
     main()
 
 
-# Might be a rule where certain number of nucleotides must be skipped before read
 # TODO: Update global codon frequency?
 # TODO: Remove ambiguous reads?
 # TODO: Replace hardcoded filename with an automated file read algorithm
