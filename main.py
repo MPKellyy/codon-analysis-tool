@@ -1,6 +1,8 @@
 import pandas as pd
 from Bio.SeqIO.QualityIO import FastqGeneralIterator
 import os
+from tqdm import tqdm
+
 
 # Function used to identify and keep track of incoming codons
 # Input: sequence, codon frequency dictionary, leftmost nucleotide in reading frame = (sequence length - 1) - offset
@@ -102,7 +104,7 @@ def read_file(filename):
     # Iterates through all entries in a fastq file and tracks number of codons seen
     with open(filename) as in_handle:
         # For every sequence in fastq file
-        for title, seq, qual in FastqGeneralIterator(in_handle):
+        for title, seq, qual in tqdm(FastqGeneralIterator(in_handle), desc=filename):
             # Analyze all codons in current sequence, update number of codons seen
             codoncounter += track_codons(seq, codonmap, 3, 10)
 
@@ -126,7 +128,6 @@ def main():
         # If fastq file is found
         if entry.is_file() and entry.name.endswith('.fastq'):
             # Notify wich file is being read
-            print("Reading", entry.name)
             # Add latest file results to overall results
             total_results = pd.concat((total_results, read_file(entry.name)), axis=0)
 
