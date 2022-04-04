@@ -131,6 +131,7 @@ def read_file(filename):
         df = create_df(readname, codoncounter, site_map)
         return df
 
+
 def populate_site_dict(site_dict, site, input_df):
     for codon_key in site_dict.keys():
         temp_df = input_df[(input_df.codon == codon_key)]
@@ -139,8 +140,39 @@ def populate_site_dict(site_dict, site, input_df):
         #print(temp_df[(temp_df.site == site)])
         sum_seen = (temp_df[(temp_df.site == site)])["times_seen"].sum()
         site_dict[codon_key] = sum_seen
-
         #print(site_dict)
+
+# Acquiring codons per site in sample type data
+def get_site_occurrences(sample_df):
+    sample_E_dict = {}
+    sample_P_dict = {}
+    sample_A_dict = {}
+
+    for codon in sample_df["codon"]:
+        sample_E_dict[codon] = 0
+        sample_P_dict[codon] = 0
+        sample_A_dict[codon] = 0
+        populate_site_dict(sample_E_dict, "E", sample_df)
+        populate_site_dict(sample_P_dict, "P", sample_df)
+        populate_site_dict(sample_A_dict, "A", sample_df)
+
+    print(sample_E_dict)
+    print(sample_P_dict)
+    print(sample_A_dict)
+
+    return [sample_E_dict, sample_P_dict, sample_A_dict]
+
+def compute_site_frequenices(sample_1, sample_2):
+    # Index 0 = E, Index 1 = P, Index 2 = A
+    codon_site_frequencies = [{}, {}, {}]
+    # For sites E, P, and A (in that order)
+    for site in range(0, len(sample_1)):
+        # For every codon at current site between wild and mutant types
+        for codon_key in sample_1[site].keys():
+            # Save codon at current site as key, with (wild site occurrences)/(mutant site occurrences) as value
+            codon_site_frequencies[site][codon_key] = sample_1[site][codon_key]/sample_2[site][codon_key]
+
+    return codon_site_frequencies
 
 
 def main():
@@ -173,38 +205,21 @@ if __name__ == "__main__":
     # pd.set_option('display.max_rows', None)
     # pd.set_option('display.max_columns', None)
 
-    # Turn this into a function that returns a list of three dictionaries
-    # Acquiring codons per site in wild type data
-    wild_A_dict = {}
-    wild_P_dict = {}
-    wild_E_dict = {}
+    # Acquiring codons per site in each sample type
+    print("Computing Wild-Site-Occurrences")
+    wild_site_list = get_site_occurrences(wild_df)
+    print("Computing Mutant-Site-Occurrences")
+    mutant_site_list = get_site_occurrences(mutant_df)
+    print("Computing Codon-Site-Frequencies")
+    codon_site_frequencies = compute_site_frequenices(wild_site_list, mutant_site_list)
 
-    for codon in wild_df["codon"]:
-        wild_A_dict[codon] = 0
-        wild_P_dict[codon] = 0
-        wild_E_dict[codon] = 0
-        populate_site_dict(wild_A_dict, "A", wild_df)
-        #print((wild_df[(wild_df.site == "A")]).groupby(["codon", "site"])[["codon", "site", "times_seen"]].sum())
-        #print(wild_A_dict)
-        #break
-        populate_site_dict(wild_P_dict, "P", wild_df)
-        populate_site_dict(wild_E_dict, "E", wild_df)
+    print(codon_site_frequencies[0])
+    print(codon_site_frequencies[1])
+    print(codon_site_frequencies[2])
 
-    # Acquiring codons per site in mutant type data
-    mutant_A_dict = {}
-    mutant_P_dict = {}
-    mutant_E_dict = {}
 
-    for codon in mutant_df["codon"]:
-        mutant_A_dict[codon] = 0
-        mutant_P_dict[codon] = 0
-        mutant_E_dict[codon] = 0
-        populate_site_dict(mutant_A_dict, "A", mutant_df)
-        #print((mutant_df[(mutant_df.site == "A")]).groupby(["codon", "site"])[["codon", "site", "times_seen"]].sum())
-        #print(mutant_A_dict)
-        #break
-        populate_site_dict(mutant_P_dict, "P", mutant_df)
-        populate_site_dict(mutant_E_dict, "E", mutant_df)
+
+
 
 
 
