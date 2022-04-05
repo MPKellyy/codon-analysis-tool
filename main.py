@@ -1,7 +1,9 @@
+import matplotlib
 import pandas as pd
 from Bio.SeqIO.QualityIO import FastqGeneralIterator
 import os
 from tqdm import tqdm
+import seaborn as sns
 
 
 # Function used to identify and keep track of incoming codons
@@ -107,7 +109,6 @@ def create_df(readname, total_codons, site_map):
     return df
 
 
-# Main function
 def read_file(filename):
     # Dictionary used to keep track of seen codons (frequency dictionary)
     # codonmap = {}
@@ -175,6 +176,41 @@ def compute_site_frequenices(sample_1, sample_2):
     return codon_site_frequencies
 
 
+def display_graph(df):
+    # Index 0 = E, Index 1 = P, Index 2 = A
+    sites = ["E", "P", "A"]
+
+    for site in sites:
+        temp_df = df[(df.site == site)]
+        temp_df = temp_df.sort_values(by=['times_seen'], ascending=False)
+        #temp_df = temp_df.sort_values(by=['codon'])
+        #temp_df = temp_df.head(18)
+        #print(temp_df)
+
+
+        #sns.boxplot(x="codon", y="times_seen", hue="type", palette=["m", "g"], data=temp_df).set(title=site+' Site')
+
+
+        sns.catplot(x="codon", y="times_seen", hue="type", palette=["m", "g"], data=temp_df, kind="box", height=8, aspect=2);
+        matplotlib.pyplot.xticks(rotation=90)
+        matplotlib.pyplot.show()
+
+
+
+
+def frequencies_to_dataframe(codon_site_frequencies):
+    # Index 0 = E, Index 1 = P, Index 2 = A
+    sites = ["E", "P", "A"]
+    frequency_df = pd.DataFrame(columns=['codon', 'site', 'frequency'])
+
+    for site in range(0, len(sites)):
+        for codon_key in codon_site_frequencies[site].keys():
+            frequency_df.loc[len(frequency_df)] = [codon_key, sites[site], codon_site_frequencies[site][codon_key]]
+
+    frequency_df = frequency_df.set_index('codon')
+    return frequency_df
+
+
 def main():
     # Creating dataframe to store all file-read results
     total_results = pd.DataFrame(columns=['read_name', 'codon', 'amino_acid', 'times_seen', 'site', 'contains_ambiguous', 'type'])
@@ -195,15 +231,25 @@ def main():
 # This is where the main code starts
 if __name__ == "__main__":
     # main()
+    pd.set_option('display.max_rows', None)
+    pd.set_option('display.max_columns', None)
     df = pd.read_csv("total_results.csv")
+    display_graph(df)
+
     # Removing ambiguous nucleotide reads
     df = df[(df.contains_ambiguous == False)]
+
+    #codon_freq = pd.read_csv("wild_vs_mutant_codon_site_frequencies.csv")
+
+    #codon_freq = codon_freq.sort_values(by=['frequency'], ascending=False)
+    #codon_freq = codon_freq.set_index("codon")
+    #print(codon_freq)
+    #quit(0)
+
 
     # Dataframe of only Wild Types
     wild_df = df[(df.type == "Wild")]
     mutant_df = df[(df.type == "Mutant")]
-    # pd.set_option('display.max_rows', None)
-    # pd.set_option('display.max_columns', None)
 
     # Acquiring codons per site in each sample type
     print("Computing Wild-Site-Occurrences")
@@ -213,28 +259,5 @@ if __name__ == "__main__":
     print("Computing Codon-Site-Frequencies")
     codon_site_frequencies = compute_site_frequenices(wild_site_list, mutant_site_list)
 
-    print(codon_site_frequencies[0])
-    print(codon_site_frequencies[1])
-    print(codon_site_frequencies[2])
-
-
-
-
-
-
-
-
-    # print((wild_df[(wild_df.site == "A")]).groupby(["codon", "site"])[["codon", "site", "times_seen"]].sum())
-    # print(wild_A_dict)
-
-
-
-
-
-
-
-
-
-
-
-# TODO: Update global codon frequency?
+    frequency_df = frequencies_to_dataframe(codon_site_frequencies)
+    frequency_df.to_csv("wild_vs_mutant_codon_site_frequencies.csv")
