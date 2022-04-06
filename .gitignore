@@ -6,3 +6,10 @@
 /RIBO-WT2_R1_trimmed.fastq
 /RIBO-WT1_R1_trimmed.fastq
 /RIBO-K90D3_R1_trimmed.fastq
+/A_Site_boxplot.png
+/A_Site_stripplot.png
+/E_Site_boxplot.png
+/E_Site_stripplot.png
+/P_Site_boxplot.png
+/P_Site_stripplot.png
+/wild_vs_mutant_codon_site_frequencies.csv
