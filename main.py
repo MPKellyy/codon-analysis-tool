@@ -90,7 +90,7 @@ def create_df(readname, site_map):
             elif "K" in readname:
                 type = "Mutant"
 
-            # Cols: Name of read codon came from, codon sequence, times seen, frequency in read, contains an ambiguous read
+            # Cols: Name of file read, codon sequence, times seen, frequency in read, contains an ambiguous read
             codondata = [readname, codon, amino_acid, site_map[site][codon], sites[site], "N" in codon, type]
 
             # Adding entry to dataframe list
@@ -101,6 +101,7 @@ def create_df(readname, site_map):
     # Print and return dataframe
     df = df.set_index('read_name')
     return df
+
 
 # Function used to read an individual fastq file
 # Input: String of file name
@@ -184,7 +185,7 @@ def display_graph(df):
         site_df = site_df.sort_values(by=['times_seen'], ascending=False)
 
         # Displaying results as a box plot
-        sns.catplot(x="codon", y="times_seen", hue="type", palette=["m", "g"], data=site_df, kind="box", height=8, aspect=2);
+        sns.catplot(x="codon", y="times_seen", hue="type", palette=["m", "g"], data=site_df, kind="box", height=8, aspect=2).set(title=site + ' Site')
         plt.xticks(rotation=90)
         plt.tight_layout()
         plt.savefig(site + "_Site_boxplot.png")
@@ -272,10 +273,6 @@ def main():
     frequency_df = frequency_df.sort_values(by=['frequency'], ascending=False)
     # Save frequencies
     frequency_df.to_csv("wild_vs_mutant_codon_site_frequencies.csv")
-
-    # Printing codon-site frequencies
-    # pd.set_option('display.max_rows', None)
-    # print(frequency_df)
 
 
 # This is where the main code starts
