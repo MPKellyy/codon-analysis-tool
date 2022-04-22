@@ -68,7 +68,6 @@ def create_df(readname, site_map):
 
     # Creating an empty list to hold all entries in the dataframe
     data = []
-    codon_index = 0
 
     sites = ["A", "P", "E"]  # Keeps track of which site is being read
 
